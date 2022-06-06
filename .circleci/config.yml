@@ -72,38 +72,83 @@ jobs:
 
   test-frontend:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here
     steps:
       # Checkout code from git
       # Restore from cache
       # Your job code here
+      - checkout
+      - restore_cache:
+          keys:
+            - build-frontend
+      - run:
+          name: Testing frontend
+          command: |
+            cd frontend
+            npm install
+            npm run test
                 
   test-backend:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here
     steps:
       # Checkout code from git
       # Restore from cache
       # Your job code here
+      - checkout
+      - restore_cache:
+          keys:
+            - build-backend
+      - run:
+          name: Testing backend
+          command: |
+            cd backend
+            npm install
+            npm run test
             
   scan-frontend:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here
     steps:
       # Checkout code from git
       # Restore from cache
       # Your job code here
+      - checkout
+      - restore_cache:
+          keys:
+            - build-frontend
+      - run:
+          name: Scanning frontend
+          command: |
+            cd frontend
+            npm install
+            npm audit fix --audit-level=critical --force
 
   scan-backend:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here
     steps:
       # Checkout code from git
       # Restore from cache
       # Your job code here
+      - checkout
+      - restore_cache:
+          keys:
+            - build-frontend
+      - run:
+          name: Scanning backend
+          command: |
+            cd backend
+            npm install
+            npm audit fix --audit-level=critical --force
 
   deploy-infrastructure:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -138,6 +183,7 @@ jobs:
 
   configure-infrastructure:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -157,6 +203,7 @@ jobs:
 
   run-migrations:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here that supports NodeJS
     steps:
       # Checkout code from git
@@ -174,6 +221,7 @@ jobs:
 
   deploy-frontend:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -195,6 +243,7 @@ jobs:
                     
   deploy-backend:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -212,7 +261,7 @@ jobs:
 
   smoke-test:
     docker:
-      # Lightweight Docker image 
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - run:
@@ -235,7 +284,7 @@ jobs:
 
   cloudfront-update:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - run:
@@ -250,21 +299,23 @@ jobs:
 
 cleanup:
     docker:
-      # Docker image here
+      - image: amazon/aws-cli
     steps:
-      # Checkout code from git
-      - run:
-          name: Get old stack workflow id
-          command: |
-            # your code here
-            export OldWorkflowID="the id here"
-            export STACKS=[] #put the list of stacks here
+      - checkout
       - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            if [[ 6f4e40c == "" ]]
             then
-              # your code here
+            echo "No workflow id found"
+            else
+            if [[ "683c244" != "6f4e40c" ]]
+            then
+              echo "$OldWorkflowID!=$CurrentWorkflowID => will delete old version"
+              aws s3 rm "s3://udapeople-6f4e40c" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-6f4e40c"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-6f4e40c"
+            fi
             fi
             
 
