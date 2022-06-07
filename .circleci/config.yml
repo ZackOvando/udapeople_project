@@ -285,26 +285,24 @@ jobs:
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
+      - checkout
+      - dependencies
       - run:
-          name: Install dependencies
+          name: Get backend url
           command: |
             BACKEND_IP=$(aws cloudformation describe-stacks --stack-name udapeople-backend-"${CIRCLE_WORKFLOW_ID:0:7}" --query "Stacks[0].Outputs[0].OutputValue" --output text)
             API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL=${API_URL}" >> frontend/.env
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            cat frontend/.env
       - run:
           name: Deploy frontend objects
           command: |
+            # your code here
             cd frontend
-            npm i
+            npm install
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 cp dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursives
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
                     
   deploy-backend:
     docker:
@@ -315,6 +313,7 @@ jobs:
       # Add ssh keys with fingerprint
       # attach workspace
       - checkout
+      - dependencies
       - add_ssh_keys:
           fingerprints: ["db:a3:3e:0d:36:8d:8b:99:c0:5f:a1:cf:72:d0:32:4a"]
       - attach_workspace: 
@@ -331,8 +330,8 @@ jobs:
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
-            cat ~/project/.circleci/ansible/inventory.txt
-            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
 
   smoke-test:
     docker:
