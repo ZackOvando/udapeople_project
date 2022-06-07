@@ -9,7 +9,8 @@ commands:
       - run:
           name: Installing necessary packages
           command: |
-            sudo apt update
+            apt update
+            apt-get install sudo -y
             sudo apt install -y tar gzip curl software-properties-common
       - run:
           name: Installing aws-cli
