@@ -181,7 +181,7 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             aws cloudformation describe-stacks \
-              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name "udapeople-udapeople-kk1j287dhjppmz437-chese" \
               --query "Stacks[0].Outputs[0].OutputValue" \
               --output text >> .circleci/ansible/inventory.txt
       - persist_to_workspace:
