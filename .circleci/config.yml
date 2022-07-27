@@ -174,7 +174,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: cimg/base:2021.04
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -282,7 +282,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -308,15 +308,25 @@ jobs:
   deploy-backend:
     docker:
       - image: python:3.7-alpine3.11
+        environment:
+          NODE_ENV: "production"
+          VERSION: "1"
+          ENVIRONMENT: "production"
+          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+          TYPEORM_HOST: $TYPEORM_HOST
+          TYPEORM_USERNAME: $TYPEORM_USERNAME
+          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+          TYPEORM_DATABASE: $TYPEORM_DATABASE
+          TYPEORM_PORT: $TYPEORM_PORT
+          TYPEORM_ENTITIES: $TYPEORM_ENTITIES   
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
       # attach workspace
       - checkout
-      - dependencies
       - add_ssh_keys:
-          fingerprints: ["db:a3:3e:0d:36:8d:8b:99:c0:5f:a1:cf:72:d0:32:4a"]
+          fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       - attach_workspace: 
           at: ~/
       - run:
@@ -333,6 +343,8 @@ jobs:
             tar -C backend -czvf artifact.tar.gz .
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
+
+      #stopped right
 
   smoke-test:
     docker:
