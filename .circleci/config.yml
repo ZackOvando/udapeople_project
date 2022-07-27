@@ -9,8 +9,8 @@ commands:
       - run:
           name: Installing necessary packages
           command: |
-            apt update
-            apt install -y tar gzip curl software-properties-common
+            sudo apt update
+            sudo apt install -y tar gzip curl software-properties-common
       - run:
           name: Installing aws-cli
           command: |
@@ -21,7 +21,7 @@ commands:
           name: Installing ansible
           command: |
             add-apt-repository --yes --update ppa:ansible/ansible
-            apt install ansible
+            sudo apt install ansible
             
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -403,7 +403,7 @@ jobs:
         - run:
             name: Remove old stacks and files
             command: |
-              if [[ 6f4e40c == "ibj" ]]
+              if [[ 6f4e40c == "" ]]
               then
               echo "No workflow id found"
               else
