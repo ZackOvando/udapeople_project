@@ -403,7 +403,7 @@ jobs:
         - run:
             name: Remove old stacks and files
             command: |
-              if [[ 6f4e40c == "" ]]
+              if [[ 6f4e40c == "ibj" ]]
               then
               echo "No workflow id found"
               else
