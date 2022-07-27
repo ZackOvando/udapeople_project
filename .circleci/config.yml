@@ -362,22 +362,17 @@ jobs:
              apk add --update curl
              pip install awscli
       - run:
+          name: Get backend url
+          command: |
+            # your code here
+      - run:
           name: Backend smoke test.
           command: |
-             BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-             API_URL="http://${BACKEND_IP}:3030"
-             curl "${API_URL}/api/status"
+            # your code here
       - run:
           name: Frontend smoke test.
           command: |
-             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"             
-             echo ${URL} 
-             if curl -s ${URL} | grep "Welcome"
-             then
-               exit 0
-             else
-               exit 1
-             fi  
+            # your code here
       # Here's where you will add some code to rollback on failure  
 
   cloudfront-update:
