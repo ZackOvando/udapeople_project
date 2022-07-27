@@ -353,25 +353,31 @@ jobs:
 
   smoke-test:
     docker:
-      - image: circleci/node:13.8.0
+      - image: python:3.7-alpine3.11
     steps:
       # Checkout code from git
       - run:
           name: Install dependencies
           command: |
-            # your code here
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
+             apk add --update curl
+             pip install awscli
       - run:
           name: Backend smoke test.
           command: |
-            # your code here
+             BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+             API_URL="http://${BACKEND_IP}:3030"
+             curl "${API_URL}/api/status"
       - run:
           name: Frontend smoke test.
           command: |
-            # your code here
+             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"             
+             echo ${URL} 
+             if curl -s ${URL} | grep "Welcome"
+             then
+               exit 0
+             else
+               exit 1
+             fi  
       # Here's where you will add some code to rollback on failure  
 
   cloudfront-update:
