@@ -174,7 +174,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/base:2021.04
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -282,11 +282,14 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/node:13.14.0
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
       - checkout
+      - restore_cache:
+          keys:
+            - build-frontend
       - dependencies
       - run:
           name: Get backend url
