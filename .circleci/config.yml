@@ -325,7 +325,7 @@ jobs:
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
-      # Add ssh keys with fingerprint
+      # Add ssh keys with finge
       # attach workspace
       - checkout
       - add_ssh_keys:
@@ -348,28 +348,48 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-  smoke-test:
+smoke-test-backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
+      - checkout
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            apk add --update curl
+            pip install awscli
       - run:
-          name: Get backend url
+          name: Backend smoke test
           command: |
-            # your code here
+             BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+             API_URL="http://${BACKEND_IP}:3030"
+             curl "${API_URL}/api/status"
+
+  smoke-test-frontend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Backend smoke test.
+          name: Install dependencies
           command: |
-            # your code here
+            apk add --update curl
+            pip install awscli
       - run:
-          name: Frontend smoke test.
+          name: Smoke test for front end
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"             
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+              exit 0
+            else
+              exit 1
+            fi
 
   cloudfront-update:
     docker:
