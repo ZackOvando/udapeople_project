@@ -174,7 +174,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: cimg/base:2021.04
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
