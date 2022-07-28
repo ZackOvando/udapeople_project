@@ -317,7 +317,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: amazon/aws-cli #python:3.7-alpine3.11
+      - image: python:3.7-alpine3.11 #python:3.7-alpine3.11
         environment:
           NODE_ENV: "production"
           VERSION: "1"
