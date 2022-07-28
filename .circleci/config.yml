@@ -317,7 +317,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/node:13.14.0
         environment:
           NODE_ENV: "production"
           VERSION: "1"
