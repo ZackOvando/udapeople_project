@@ -338,10 +338,14 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       - attach_workspace: 
-          at: ~/
+          at:  ~/project/.circleci/ansible/inventory.txt
       - restore_cache:
           keys:
             - build-backend
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
       - run:
           name: Install dependencies
           command: |
