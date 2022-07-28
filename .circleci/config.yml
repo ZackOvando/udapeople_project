@@ -317,7 +317,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: cimg/node:13.14.0
+      - image: python:3.7-alpine3.11
         environment:
           NODE_ENV: "production"
           VERSION: "1"
@@ -338,16 +338,16 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
+      - run:
           name: Install dependencies
           command: |
             apk add --update ansible nodejs npm tar gzip
       - restore_cache:
           keys:
             - build-backend
-      - run:
-          name: Install tar utility
-          command: |
-            yum install -y tar gzip
       - run:
           name: Deploy backend
           command: |
