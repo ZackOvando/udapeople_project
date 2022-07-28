@@ -350,6 +350,8 @@ jobs:
             cd backend
             npm install
             npm run build
+            npx --package typescript tsc --init
+            npx --package typescript tsc --version
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
