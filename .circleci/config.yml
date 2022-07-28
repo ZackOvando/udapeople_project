@@ -255,6 +255,8 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml   
+      - destroy-environment: 
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
 
   run-migrations:
     docker:
@@ -278,6 +280,8 @@ jobs:
             else
               curl https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
+      - destroy-environment:
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -294,9 +298,10 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            BACKEND_IP=$(aws cloudformation describe-stacks --stack-name udapeople-backend-"${CIRCLE_WORKFLOW_ID:0:7}" --query "Stacks[0].Outputs[0].OutputValue" --output text)
-            API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL=${API_URL}" >> frontend/.env
+            export BACKEND_IP=$(aws cloudformation describe-stacks --stack-name udapeople-backend-"${CIRCLE_WORKFLOW_ID:0:7}" --query "Stacks[0].Outputs[0].OutputValue" --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
           name: Deploy frontend objects
@@ -307,6 +312,10 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - destroy-environment:
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
+      - revert-migrations:
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
                     
   deploy-backend:
     docker:
@@ -330,8 +339,6 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
-      - attach_workspace: 
-          at: ~/
       - restore_cache:
           keys:
             - build-backend
@@ -348,9 +355,15 @@ jobs:
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment:
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
+      - revert-migrations:
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
 
+          
   smoke-test:
     docker:
       - image: python:3.7-alpine3.11
@@ -361,10 +374,6 @@ jobs:
           command: |
              apk add --update curl
              pip install awscli
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
       - run:
           name: Backend smoke test.
           command: |
