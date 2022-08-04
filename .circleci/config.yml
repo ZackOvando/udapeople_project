@@ -289,19 +289,15 @@ jobs:
       - run: 
           name: Installing Python
           command: |
-            yum install python3.7
+            sudo yum install python3.7
       - run: 
           name: Installing Ansible
           command: |
-            yum install ansible
+            sudo yum install ansible
       - run: 
           name: Installing Node
           command: |
-            yum install nodejs
-      - run: 
-          name: Installing Python
-          command: |
-            yum install ansible
+            sudo yum install nodejs
       - run:
           name: Get backend url
           command: |
