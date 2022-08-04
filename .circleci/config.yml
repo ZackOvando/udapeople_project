@@ -252,6 +252,9 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - restore_cache:
+          keys:
+            - build-backend
       - run:
           name: Run migrations
           command: |
