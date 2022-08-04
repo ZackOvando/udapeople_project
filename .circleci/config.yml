@@ -278,7 +278,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: circleci/node:13.14.0
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -286,7 +286,32 @@ jobs:
       - restore_cache:
           keys:
             - build-frontend
-      - dependencies
+      - run: 
+          name: Installing Python
+          command: |
+            yum install python3.7
+      - run: 
+          name: Installing Ansible
+          command: |
+            yum install ansible
+      - run: 
+          name: Installing Node
+          command: |
+            yum install nodejs
+      - run: 
+          name: Installing Python
+          command: |
+            yum install ansible
+      - run: 
+          name: Installing Python
+          command: |
+            sudo apt-get install ansible
+      - run:
+          name: Installing aws-cli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Get backend url
           command: |
@@ -304,12 +329,15 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      
+       - attach_workspace:
+          at: ~/
       - destroy-environment:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
                     
   deploy-backend:
     docker:
-      - image: circleci/node:13.14.0
+      - image: python:3.7-alpine3.11
         environment:
           NODE_ENV: "production"
           VERSION: "1"
@@ -329,14 +357,13 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
-      - restore_cache:
-          keys:
-            - build-backend
+    - attach_workspace:
+        at: ~/
       - run:
           name: Install dependencies
           command: |
-            sudo apt install ansible 
-            sudo apt install nodejs
+            apk add --update ansible
+            apk add --update nodejs
           # sudo apt tar gzip
      # - run:
      #     name: Install tar utility
