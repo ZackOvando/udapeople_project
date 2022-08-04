@@ -79,7 +79,7 @@ jobs:
 
   build-backend:
     docker:
-      - image: circleci/node:13.14.0  #if it doesnt work go back to circleci/node:13.14.0 
+      - image: amazon/aws-cli #circleci/node:13.14.0  #if it doesnt work go back to circleci/node:13.14.0 
     steps:
       - checkout
       - restore_cache:
@@ -116,7 +116,7 @@ jobs:
                 
   test-backend:
     docker:
-      - image: circleci/node:13.14.0 
+      - image: amazon/aws-cli
       # Docker image here
     steps:
       # Checkout code from git
@@ -155,7 +155,7 @@ jobs:
 
   scan-backend:
     docker:
-      - image: circleci/node:13.14.0 
+      - image: amazon/aws-cli
       # Docker image here
     steps:
       # Checkout code from git
@@ -317,7 +317,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: cimg/node:13.14.0 #python:3.7-alpine3.11
+      - image: amazon/aws-cli #python:3.7-alpine3.11
         environment:
           NODE_ENV: "production"
           VERSION: "1"
