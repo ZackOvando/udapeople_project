@@ -348,6 +348,7 @@ jobs:
           command: |
             apk add --update ansible 
             apk add --update nodejs
+            pip install npm
           # sudo apt tar gzip
      # - run:
      #     name: Install tar utility
