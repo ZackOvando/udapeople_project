@@ -321,10 +321,10 @@ jobs:
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - destroy-environment:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
-
+             
   deploy-backend:
-    docker: python:3.7-alpine3.11
-      - image: circleci/node:13.14.0
+    docker:
+      - image: python:3.7-alpine3.11
         environment:
           NODE_ENV: "production"
           VERSION: "1"
