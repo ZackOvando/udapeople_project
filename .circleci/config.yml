@@ -224,7 +224,10 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       # Add ssh keys with fingerprint
-      # attach workspace
+      # attach workspace\
+    steps:
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install Ansible
           command: |
@@ -247,7 +250,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.14.0
+      - image: sleavely/node-awscli:14.x
       # Docker image here that supports NodeJS
     steps:
       # Checkout code from git
@@ -259,8 +262,11 @@ jobs:
           name: Run migrations
           command: |
             cd backend
+            cat .env
             npm install
+            npm run build
             npm run migrations > migrations_dump.txt
+            cat migrations_dump.txt
       - run:
           name: Send migration results to memstash
           command: |   
@@ -270,8 +276,6 @@ jobs:
             else
               curl https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
