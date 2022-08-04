@@ -174,7 +174,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: cimg/node:13.14.0
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -260,7 +260,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: sleavely/node-awscli:14.x
+      - image: circleci/node:13.14.0
       # Docker image here that supports NodeJS
     steps:
       # Checkout code from git
@@ -286,7 +286,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: cimg/node:13.14.0
+      - image: circleci/node:13.14.0
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -317,7 +317,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: circleci/node:13.14.0
         environment:
           NODE_ENV: "production"
           VERSION: "1"
@@ -343,7 +343,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible nodejs npm tar gzip
+            sudo apt install ansible nodejs npm tar gzip
      # - run:
      #     name: Install tar utility
      #     command: |
