@@ -336,8 +336,7 @@ jobs:
           name: Install dependencies
           command: |
             sudo apt install ansible 
-            sudo apt install nodejs 
-            sudo apt install npm
+            sudo apt install nodejs npm
             sudo apt tar gzip
      # - run:
      #     name: Install tar utility
