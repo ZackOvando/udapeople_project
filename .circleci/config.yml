@@ -62,7 +62,7 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: cimg/node:13.14.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -174,12 +174,15 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: circleci/node:13.14.0 #amazon/aws-cli
+      - image: amazon/aws-cli #amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
       - checkout
-      - dependencies
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -214,17 +217,6 @@ jobs:
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
-        environment:
-          NODE_ENV: "production"
-          VERSION: "1"
-          ENVIRONMENT: "production"
-          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-          TYPEORM_HOST: $TYPEORM_HOST
-          TYPEORM_USERNAME: $TYPEORM_USERNAME
-          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-          TYPEORM_DATABASE: $TYPEORM_DATABASE
-          TYPEORM_PORT: $TYPEORM_PORT
-          TYPEORM_ENTITIES: $TYPEORM_ENTITIES
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -234,22 +226,17 @@ jobs:
       # Add ssh keys with fingerprint
       # attach workspace
       - run:
-          name: Install dependencies
-          command: |
-            apk add curl
-            apk add --upgrade bash
+        name: Install Ansible
+        command: |
             apk add --update ansible
-            apk add openssh-client
-            pip3 install awscli
-      - run:
-          name: Configure server
-          command: |
-            # Your code here
-            apk add curl
-            apk add --upgrade bash
-            apk add --update ansible
-            apk add openssh-client
-            pip3 install awscli
+   #   - run:
+  #        name: Install dependencies
+   #       command: |
+    #        apk add curl
+     #       apk add --upgrade bash
+     #       apk add --update ansible
+     #       apk add openssh-client
+          # pip3 install awscli --> return to this if this doesnt work
       - run:
           name: Configure server
           command: |
