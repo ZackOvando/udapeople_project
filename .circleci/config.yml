@@ -337,7 +337,7 @@ jobs:
           command: |
             sudo apt install ansible 
             sudo apt install nodejs
-            sudo apt tar gzip
+          # sudo apt tar gzip
      # - run:
      #     name: Install tar utility
      #     command: |
@@ -347,6 +347,7 @@ jobs:
           command: |
             cd backend
             npm install
+            npm install tar gzip
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
