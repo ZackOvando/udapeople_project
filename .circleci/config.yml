@@ -326,8 +326,6 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      - attach_workspace:
-          at: ~/
       - destroy-environment:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
                     
@@ -355,12 +353,12 @@ jobs:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
     - attach_workspace:
         at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible
-            apk add --update nodejs
-          # sudo apt tar gzip
+    - run:
+        name: Install dependencies
+        command: |
+          apk add --update ansible
+          apk add --update nodejs
+        # sudo apt tar gzip
      # - run:
      #     name: Install tar utility
      #     command: |
