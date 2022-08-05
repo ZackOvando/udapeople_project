@@ -53,7 +53,7 @@ commands:
             SUCCESS = 1
             if(( $SUCCESS==1 )); 
             then
-            #  cd ~/project/backend
+            #  cd ~/udapeople_project/backend
             #  npm install
             #  Add revert code here. You can find this in the Getting Started section.
               exit 1
@@ -91,6 +91,13 @@ jobs:
              cd backend
              npm install
              npm run build
+             cp .env dist/.env
+             pwd && ls -al
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - udapeople_project/backend/dist
+            - udapeople_project/backend/node_modules
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
@@ -217,6 +224,17 @@ jobs:
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
+        environment:
+          NODE_ENV: "production"
+          VERSION: "1"
+          ENVIRONMENT: "production"
+          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+          TYPEORM_HOST: $TYPEORM_HOST
+          TYPEORM_USERNAME: $TYPEORM_USERNAME
+          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+          TYPEORM_DATABASE: $TYPEORM_DATABASE
+          TYPEORM_PORT: $TYPEORM_PORT
+          TYPEORM_ENTITIES: $TYPEORM_ENTITIES
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -230,20 +248,19 @@ jobs:
       - run:
           name: Install Ansible
           command: |
+            apk add curl
+            apk add --upgrade bash
             apk add --update ansible
-   #   - run:
-  #        name: Install dependencies
-   #       command: |
-    #        apk add curl
-     #       apk add --upgrade bash
-     #       apk add --update ansible
-     #       apk add openssh-client
-          # pip3 install awscli --> return to this if this doesnt work
+            apk add openssh-client
+            pip3 install awscli
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml   
+            cat ~/udapeople_project/.circleci/ansible/inventory.txt
+
+            ansible-playbook -i ~/udapeople_project/.circleci/ansible/inventory.txt ~/udapeople_project/.circleci/ansible/configure-server.yml    
+          # ansible-playbook -i inventory.txt configure-server.yml --private-key=~/zackovandopersonal.pem
       - destroy-environment: 
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
 
@@ -268,7 +285,7 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |   
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            if grep -q "has been executed successfully." ~/udapeople_project/backend/migrations_dump.txt
             then
               curl -H "Content-Type: text/plain" -H "token: 7933fe63-4687-4fa1-8426-aa25aa1730ec" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             else
