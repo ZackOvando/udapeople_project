@@ -290,10 +290,10 @@ jobs:
           name: Installing Python
           command: |
             yum -y install python3.7
-      - run: 
-          name: Installing Ansible
-          command: |
-            yum install ansible
+#      - run: 
+#          name: Installing Ansible
+#          command: |
+#            yum install ansible
       - run: 
           name: Installing Node
           command: |
@@ -320,7 +320,7 @@ jobs:
              
   deploy-backend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: circleci/node:13.8.0
         environment:
           NODE_ENV: "production"
           VERSION: "1"
@@ -340,16 +340,19 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
+      - attach_workspace: 
+          at: ~/
       - restore_cache:
           keys:
             - build-backend
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible 
-            apk add --update nodejs
-            pip install npm
-          # sudo apt tar gzip
+          apk add --update ansible nodejs npm tar gzip
+        #  apk add --update ansible 
+        #  apk add --update nodejs
+        #  pip install npm
+        # sudo apt tar gzip
      # - run:
      #     name: Install tar utility
      #     command: |
