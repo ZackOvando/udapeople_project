@@ -289,15 +289,15 @@ jobs:
       - run: 
           name: Installing Python
           command: |
-            sudo yum install python3.7
+            yum -y install python3.7
       - run: 
           name: Installing Ansible
           command: |
-            sudo yum install ansible
+            yum install ansible
       - run: 
           name: Installing Node
           command: |
-            sudo yum install nodejs
+            yum install nodejs
       - run:
           name: Get backend url
           command: |
@@ -348,7 +348,6 @@ jobs:
           command: |
             apk add --update ansible 
             apk add --update nodejs
-            apk add nodejs=6.2.0-r0
             pip install npm
           # sudo apt tar gzip
      # - run:
