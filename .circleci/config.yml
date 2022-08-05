@@ -279,7 +279,7 @@ jobs:
   deploy-frontend:
     docker:
       - image: amazon/aws-cli
-      # Docker image here that supports AWS CLI
+      # Docker image here that supports AWS CLI --> try this next cimg/node:13.14.0
     steps:
       # Checkout code from git
       - checkout
@@ -299,7 +299,7 @@ jobs:
           command: |
             curl -fsSL https://rpm.nodesource.com/setup_16.x | bash - && yum -y install nodejs
             yum install -y tar gzip curl software-properties-common
-            yum install -y --update ppa:ansible/ansible
+            yum install -y ppa:ansible/ansible
             yum install -y ansible
       - run:
           name: Get backend url
@@ -361,13 +361,14 @@ jobs:
      #     command: |
      #       npm install tar gzip
       - run:
-          name: Deploy backend
+          name: Deploy backend Npm
           command: |
             cd backend
             npm install
-            npm install tar gzip
             npm run build
-            npm install typescript -g
+      - run:
+          name: Deploying backend ansible
+          command: |
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             cat ~/project/.circleci/ansible/inventory.txt
