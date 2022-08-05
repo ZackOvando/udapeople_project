@@ -339,7 +339,7 @@ jobs:
           name: Deploy backend Npm
           command: |
             cd backend
-            npm cache clean
+            npm cache clean --force
             rm -rf node_modules
             npm install
             npm run build
