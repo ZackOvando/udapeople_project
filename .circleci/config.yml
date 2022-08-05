@@ -278,7 +278,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/node:13.14.0
       # Docker image here that supports AWS CLI --> try this next cimg/node:13.14.0
     steps:
       # Checkout code from git
@@ -286,21 +286,7 @@ jobs:
       - restore_cache:
           keys:
             - build-frontend
-      - run: 
-          name: Installing Python
-          command: |
-            yum -y install python3.7
-#      - run: 
-#          name: Installing Ansible
-#          command: |
-#            yum install ansible
-      - run: 
-          name: Installing Node
-          command: |
-            curl -fsSL https://rpm.nodesource.com/setup_16.x | bash - && yum -y install nodejs
-            yum install -y tar gzip curl software-properties-common
-            yum install -y ppa:ansible/ansible
-            yum install -y ansible
+      - dependencies
       - run:
           name: Get backend url
           command: |
@@ -337,9 +323,6 @@ jobs:
           TYPEORM_ENTITIES: $TYPEORM_ENTITIES   
       # Docker image here that supports Ansible
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
@@ -352,20 +335,14 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible nodejs npm tar gzip
-        #  apk add --update ansible 
-        #  apk add --update nodejs
-        #  pip install npm
-        # sudo apt tar gzip
-     # - run:
-     #     name: Install tar utility
-     #     command: |
-     #       npm install tar gzip
       - run:
           name: Deploy backend Npm
           command: |
             cd backend
             npm install
             npm run build
+            npm audit fix --force
+            npm update
       - run:
           name: Deploying backend ansible
           command: |
