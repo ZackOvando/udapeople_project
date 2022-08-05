@@ -261,7 +261,8 @@ jobs:
           name: Run migrations
           command: |
             cd backend
-            npm install
+            cat .env
+            npm i
             npm run build
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
@@ -342,11 +343,8 @@ jobs:
           name: Deploy backend Npm
           command: |
             cd backend
-            npm install
+            npm install -y --force
             npm run build
-      - run:
-          name: Deploying backend ansible
-          command: |
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             cat ~/project/.circleci/ansible/inventory.txt
