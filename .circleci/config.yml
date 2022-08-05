@@ -297,7 +297,10 @@ jobs:
       - run: 
           name: Installing Node
           command: |
-            yum install nodejs
+            curl -fsSL https://rpm.nodesource.com/setup_16.x | bash - && yum -y install nodejs
+            yum install -y tar gzip curl software-properties-common
+            yum install -y --update ppa:ansible/ansible
+            yum install -y ansible
       - run:
           name: Get backend url
           command: |
@@ -364,6 +367,7 @@ jobs:
             npm install
             npm install tar gzip
             npm run build
+            npm install typescript -g
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             cat ~/project/.circleci/ansible/inventory.txt
