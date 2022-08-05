@@ -323,6 +323,9 @@ jobs:
           TYPEORM_ENTITIES: $TYPEORM_ENTITIES   
       # Docker image here that supports Ansible
     steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
@@ -339,12 +342,8 @@ jobs:
           name: Deploy backend Npm
           command: |
             cd backend
-            npm cache clean --force
-            rm -rf node_modules
             npm install
             npm run build
-            npm audit fix --force
-            npm update
       - run:
           name: Deploying backend ansible
           command: |
