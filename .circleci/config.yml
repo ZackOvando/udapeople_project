@@ -52,7 +52,7 @@ commands:
             SUCCESS=$(curl --insecure  https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if(( $SUCCESS==1 )); 
             then
-                cd ~/udapeople_project/backend
+                cd ~/project/backend
                 npm install
                 npm run migrations:revert
                 exit 1
@@ -75,8 +75,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
 
   build-backend:
     docker:
@@ -95,8 +93,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
   test-frontend:
     docker:
       - image: circleci/node:13.14.0
@@ -215,8 +211,6 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
 
   configure-infrastructure:
     docker:
@@ -249,8 +243,7 @@ jobs:
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i inventory.txt configure-server.yml
           # ansible-playbook -i inventory.txt configure-server.yml --private-key=~/zackovandopersonal.pem
-      - destroy-environment: 
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
+
 
   run-migrations:
     docker:
@@ -289,8 +282,6 @@ jobs:
               curl -k -d '0' https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7}
             fi
       #Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -340,8 +331,6 @@ jobs:
             #tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             #copy zipped artifact in s3 bucket
             aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
              
   deploy-backend:
     docker:
@@ -373,8 +362,7 @@ jobs:
             cat inventory.txt
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
+      
 
 
   smoke-test:
@@ -405,12 +393,12 @@ jobs:
 #                return 0
 #            else
 #                return 1
-#            fi
+#            fiec2-54-193-178-74
       - run:
           name: Frontend smoke test.
           command: |
             # your code here
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-1.amazonaws.com/#/employees"            
             echo ${URL} 
 #            if curl -s ${URL} | grep "Welcome"
 #            then
@@ -458,9 +446,9 @@ jobs:
               if [[ "683c244" != "6f4e40c" ]]
               then
                 echo "$OldWorkflowID!=$CurrentWorkflowID => will delete old version"
-                aws s3 rm "s3://udapeople-6f4e40c" --recursive
-                aws cloudformation delete-stack --stack-name "udapeople-frontend-6f4e40c"
-                aws cloudformation delete-stack --stack-name "udapeople-backend-6f4e40c"
+                aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+                aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
+                aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
               fi
               fi
             
