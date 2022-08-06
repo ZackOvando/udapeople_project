@@ -381,7 +381,7 @@ jobs:
           name: Backend smoke test.
           command: |
             BACKEND_URL=$(aws ec2 describe-instances \
-              --filters Name=instance-state-name,Values=running \
+              --filters Name='backend--${CIRCLE_WORKFLOW_ID:0:7}',Values=running \
               --query 'Reservations[*].Instances[*].PublicDnsName' \
               --output text)
               echo "${BACKEND_URL}"
