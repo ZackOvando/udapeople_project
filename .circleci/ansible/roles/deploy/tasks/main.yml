@@ -1,30 +1,36 @@
 ---
-  - name: Copy files
-    become: true
-    copy:
-      src: /root/project/artifact.tar.gz
-      dest: /home/ubuntu/artifact.tar.gz
-  - name: Unarchive
-    become: true
-    shell : |
-        cd /home/ubuntu/
-        tar xvzf artifact.tar.gz -C .
+- name: "copy the code into ec2 instance"
+  become: yes
+  synchronize:
+    src: /root/project/backend
+    dest: /home/ubuntu
+    recursive: true
 
-  - name: "run server"
-    become: true
-    shell : |
-        cd /home/ubuntu/
-        npm install
-        pm2 stop default
-        pm2 start npm -- start
-    environment:
-      ENVIRONMENT: production
-      TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
-      TYPEORM_MIGRATIONS_DIR: "./migrations"
-      TYPEORM_MIGRATIONS: "./migrations/*.js"
-      TYPEORM_ENTITIES: "./modules/domain/**/*.entity.js"
-      TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
-      TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
-      TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
-      TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-      TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
+- name: "run backend"
+  become: true
+  shell: |
+    cd home/ubuntu/backend
+    npm install
+    npm run build
+  args:
+    chdir: /home/ubuntu/backend
+
+- name: "start the code"
+  become: true
+  shell: |
+    # pm2 start -f ./main.js
+    pm2 stop default
+    pm2 start npm -- start
+  args:
+    chdir: /home/ubuntu/backend/dist
+  environment:
+    ENVIRONMENT: production
+    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
+    TYPEORM_MIGRATIONS_DIR: "./migrations"
+    TYPEORM_MIGRATIONS: "./migrations/*.js"
+    TYPEORM_ENTITIES: "./modules/domain/**/*.entity.js"
+    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
+    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
