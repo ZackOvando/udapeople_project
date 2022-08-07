@@ -405,6 +405,13 @@ jobs:
             cd backend
             cat .env
       - run:
+          name: Get backend url
+          no_output_timeout: 30m
+          command: |
+            BACKEND_IP=$(grep -v "[web]" /tmp/.circleci/ansible/inventory.txt)
+            echo "${BACKEND_IP}"
+            curl -Is http://${BACKEND_IP}:3030/api/status | head -n 1
+      - run:
           name: Backend smoke test.
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
@@ -415,9 +422,9 @@ jobs:
             echo ${API_URL}
             if curl -ks "${API_URL}/api/status" | grep "ok"
               then
-                return 0
+                exit
               else
-                return 1
+                exit
               fi
       - run:
           name: Frontend smoke test.
@@ -426,9 +433,9 @@ jobs:
             echo ${URL}
             if curl -sk ${URL} | grep "Welcome"
               then
-                return 1
+                exit
               else
-                return 1
+                exit
               fi
       - run:
           name: revert-migrations
