@@ -408,7 +408,7 @@ jobs:
           name: Get backend url
           no_output_timeout: 30m
           command: |
-            BACKEND_IP=$(grep -v "[web]" /tmp/.circleci/ansible/inventory.txt)
+            BACKEND_IP=$(grep -v "[web]" .circleci/ansible/inventory.txt)
             echo "${BACKEND_IP}"
             curl -Is http://${BACKEND_IP}:3030/api/status | head -n 1
       - run:
