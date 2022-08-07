@@ -227,6 +227,8 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - restore_cache:
+          key: frontend-build
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       # Add ssh keys with fingerprint
@@ -244,60 +246,93 @@ jobs:
       - run:
           name: Configure server
           command: |
+            cd backend
+            touch ".env"
+            echo ENVIRONMENT=production > ".env"
+            echo TYPEORM_CONNECTION=postgres >> ".env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> ".env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> ".env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> ".env"
+            echo NODE_ENV=production >> ".env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+            cd ..            
+            export ANSIBLE_HOST_KEY_CHECKING=False
             cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml
+            ansible-playbook -i inventory.txt configure-server.yml -vv
           # ansible-playbook -i inventory.txt configure-server.yml --private-key=~/zackovandopersonal.pem
-
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
       # Docker image here that supports NodeJS
+      #- image: circleci/node:13.8.0
+      - image: cimg/node:18.4.0
     steps:
       # Checkout code from git
       - checkout
-      - attach_workspace:
-          at: ~/
+      - restore_cache:
+          keys: [backend-build]
       - run:
-          name: Install npm
+          name: Install AWS CLI dependencies
+      #    # working_directory: /tmp
           command: |
-            cd ~/project/backend 
-            npm cache clean --force
+            sudo apt-get update
+            sudo apt-get install npm python3 -y 
+            sudo apt-get install python3-pip -y
+            sudo apt-get install unzip  -y
+            sudo pip3 install awscli
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            cd backend
+            touch ".env"
+            echo ENVIRONMENT=production > ".env"
+            echo TYPEORM_CONNECTION=postgres >> ".env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> ".env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> ".env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> ".env"
+            echo NODE_ENV=production >> ".env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+      - run:
+          name: install npm
+          command: |
+            cd backend
             npm install
             npm run build
       - run:
-          name: .env
+          name: Run migrations
+          no_output_timeout: 20m
           command: |
-            pwd
-            echo ENVIRONMENT=production > "backend/.env"
-            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
-            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
-            echo NODE_ENV=production >> "backend/.env"
-            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
-            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            # Your code here
             cd backend
-            cat .env
-      - run:
-          name: run migrations
-          command: |
-            cd backend
-            npm run migrations > migrations_dump.txt
-            cat migrations_dump.txt
-            curl -k https://kvdb.io/4KLD8geH4W1m4rQhB1fkdQ/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            sudo npm run migrations > migrations_dump.txt
+      - slack/notify:
+          channel: udapeople
+          event: fail
+          template: basic_fail_1
       - run:
           name: Send migration results to kvdb
           command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            # Your code here
+            if grep -q "has been executed successfully." backend/migrations_dump.txt
             then
-              curl -k https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+              curl  https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
-      #Here's where you will add some code to rollback on failure
-     # Here's where you will add some code to rollback on failure      
+    # Here's where you will add some code to rollback on failure  
+      - destroy-environment:
+          workflowid: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - revert-migrations    
+  
+
+
 
   deploy-frontend:
     docker:
@@ -424,10 +459,6 @@ jobs:
             else
               return 1
             fi
-      - slack/notify:
-          channel: udapeople
-          event: fail
-          template: basic_fail_1
       - run:
           name: Frontend smoke test.
           command: |
@@ -440,14 +471,12 @@ jobs:
             else
               return 1
             fi
-      - slack/notify:
-          channel: udapeople
-          event: fail
-          template: basic_fail_1
       - destroy-environment:
-          workflowid: "${CIRCLE_WORKFLOW_ID:0:7}" 
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
       - revert-migrations:
-          workflowid: "${CIRCLE_WORKFLOW_ID:0:7}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+
   cloudfront-update:
     docker:
       # Docker image here that supports AWS CLI
