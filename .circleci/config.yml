@@ -202,9 +202,9 @@ jobs:
           command: |
             echo [web] > .circleci/ansible/inventory.txt
             aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend-id" \
-              --output text >> .circleci/ansible/inventory.txt
+                --filters Name=tag:Name,Values="backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --query 'Reservations[*].Instances[*].PublicIpAddress' \
+                --output text >> inventory.txt
             cat .circleci/ansible/inventory.txt
 
 #            BACKEND_IP=$(aws ec2 describe-instances \
@@ -244,8 +244,18 @@ jobs:
       - run:
           name: Configure server
           command: |
-            cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml
+            echo ENVIROMENT=$ENVIROMENT > "backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cat .circleci/ansible/inventory.txt
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
           # ansible-playbook -i inventory.txt configure-server.yml --private-key=~/zackovandopersonal.pem
 
 
@@ -422,9 +432,9 @@ jobs:
             echo ${API_URL}
             if curl -ks "${API_URL}/api/status" | grep "ok"
               then
-                exit
+                return 1
               else
-                exit
+                return 1
               fi
       - run:
           name: Frontend smoke test.
@@ -433,9 +443,9 @@ jobs:
             echo ${URL}
             if curl -sk ${URL} | grep "Welcome"
               then
-                exit
+                return 1
               else
-                exit
+                return 1
               fi
       - run:
           name: revert-migrations
