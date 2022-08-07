@@ -258,25 +258,42 @@ jobs:
       - attach_workspace:
           at: ~/
       - run:
-          name: Run migrations
+          name: Install npm
           command: |
             cd ~/project/backend 
             npm cache clean --force
             npm install
             npm run build
+      - run:
+          name: .env
+          command: |
+            pwd
+            echo ENVIRONMENT=production > "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cd backend
+            cat .env
+      - run:
+          name: run migrations
+          command: |
+            cd backend
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
+            curl -k https://kvdb.io/4KLD8geH4W1m4rQhB1fkdQ/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
       - run:
-          name: Send migration status
+          name: Send migration results to kvdb
           command: |
-            cd ~/project/backend
-            if grep -q "No migrations are pending" migrations_dump.txt
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-              echo "Migration is successful"
-              curl -k -d '1' https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7}
-            else
-              echo "Failure"
-              curl -k -d '0' https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -k https://kvdb.io/64xvxrRXspfWtdyJZVPqvf/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
       #Here's where you will add some code to rollback on failure
      # Here's where you will add some code to rollback on failure      
@@ -337,28 +354,18 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
-            apk add --update tar gzip nodejs npm
-            apk add --update --no-cache python3 py3-pip
-            /usr/local/bin/python -m pip install --upgrade pip
-            pip install awscli 
+            apk add --update curl
+            apk add --update nodejs
+            apk add --update tar gzip
+            apk add --update npm
       - run:
           name: Deploy backend
           command: |
             cd backend
-            echo TYPEORM_CONNECTION=postgres >> ".env"
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> ".env"
-            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> ".env"
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> ".env"
-            echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
-            echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
-            npm i
+            npm install
             npm run build
             cd ..
-            pwd
-            tar -C backend -czvf artifact.tar.gz .
+            tar -C backend -vczf artifact.tar.gz .
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
@@ -368,45 +375,71 @@ jobs:
 
   smoke-test:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: circleci/node:13.8.0
     steps:
       - checkout
+      - aws-cli/setup
+      - restore_cache:
+          keys: [backend-build]
       - run:
-          name: Install dependencies
+          name: install npm
           command: |
-            apk add --update nodejs npm curl
-            apk add --update --no-cache python3 py3-pip
-            /usr/local/bin/python -m pip install --upgrade pip
-            pip install awscli
-            aws --version
+            cd backend
+            npm install
       - run:
-          name: Get backend url
+          name: .env
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+            pwd
+            echo ENVIRONMENT=production > "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cd backend
+            cat .env
       - run:
           name: Backend smoke test.
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
-            echo "BACKEND_IP=${BACKEND_IP}"
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name, Values=backend-id" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL=${API_URL}"
-            if curl "${API_URL}/api/status" | grep "ok"
-            then
+            echo ${API_URL}
+            if curl -ks "${API_URL}/api/status" | grep "ok"
+              then
                 return 0
-            else
+              else
                 return 1
-            fi
+              fi
       - run:
           name: Frontend smoke test.
           command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
-            echo ${URL} 
-            if curl -s ${URL} | grep "Welcome"
+            URL="https://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3.amazonaws.com/index.html#/employees"
+            echo ${URL}
+            if curl -sk ${URL} | grep "Welcome"
+              then
+                return 1
+              else
+                return 1
+              fi
+      - run:
+          name: revert-migrations
+          when: on_fail
+          command: |
+            SUCESS=$(curl -k https://kvdb.io/4KLD8geH4W1m4rQhB1fkdQ/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            echo $SUCCESS
+            if(( SUCCESS==1 )); 
             then
-              return 0
-            else
-              return 1
-            fi 
+              cd ~/project/backend
+              npm run migrations:revert
+            fi
 
   cloudfront-update:
     docker:
