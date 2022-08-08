@@ -399,6 +399,8 @@ jobs:
             apk add --update nodejs
             apk add --update tar gzip
             apk add --update npm
+            apk update pip3
+            pip3 install awscli
       - run:
           name: deploy backend
           command: |
