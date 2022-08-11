@@ -236,8 +236,6 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
-      - restore_cache:
-          key: frontend-build
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       # Add ssh keys with fingerprint
@@ -250,6 +248,8 @@ jobs:
             apk add curl
             apk add --upgrade bash
             apk add --update ansible
+            apk add --update --no-cache python3 py3-pip
+            /usr/local/bin/python -m pip install --upgrade pip
             apk add openssh-client
             pip3 install awscli
       - run:
@@ -394,11 +394,11 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible
-            apk add --update curl
-            apk add --update nodejs
-            apk add --update tar gzip
-            apk add --update npm
+            sudo -y apk add --update curl
+            sudo -y apk add --update ansible
+            sudo -y apk add --update tar gzip nodejs npm
+            sudo -y apk add --update --no-cache python3 py3-pip
+            /usr/local/bin/python -m pip install --upgrade pip
             apk update pip3
             pip3 install awscli
       - run:
@@ -416,13 +416,14 @@ jobs:
             npm i
             npm run build
             cd ..
+            pwd
             tar -C backend -cvzf artifact.tar.gz .
             cd .circleci/ansible
             echo "contents of the inventory.txt ...."
             cat inventory.txt
             export ANSIBLE_HOST_KEY_CHECKING=False
             aws --version
-            ansible-playbook -i inventory.txt deploy-backend.yml -u ubuntu -c ssh
+            ansible-playbook -i inventory.txt deploy-backend.yml
       
 
 
