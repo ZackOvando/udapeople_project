@@ -206,14 +206,6 @@ jobs:
               --output text)
             echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt  
             echo backend ip addres: $BACKEND_AWS_PUBLIC_IP
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
 
   configure-infrastructure:
@@ -354,6 +346,7 @@ jobs:
             npm install
             sudo apt-get install curl
             sudo apt-get install tar gzip
+            do-release-upgrade
       - run:
           name: Get backend url
           command: |
@@ -400,7 +393,7 @@ jobs:
       - run:
           name: deploy backend
           command: |
-            cd backend
+            touch ~/project/backend/.env
             echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
             echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
             echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
@@ -409,16 +402,14 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
             echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
-            npm i
-            npm run build
-            cd ..
-            pwd
+         #   npm i
+          #  npm run build
+          #  cd ..
+          #  pwd
             tar -C backend -cvzf artifact.tar.gz .
-            BACKEND_AWS_PUBLIC_IP=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --output text)
-            echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt 
+            cd backend
+            ls -ahl
+            cd ..
             cd .circleci/ansible
             echo "contents of the inventory.txt ...."
             cat ~/project/.circleci/ansible/inventory.txt
@@ -448,10 +439,9 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text --region us-west-1)
-            echo "BACKEND_IP=${BACKEND_IP}"
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL=${API_URL}"
+            echo "${API_URL}"
+            echo "${BACKEND_IP}"
             curl "${API_URL}/api/status" 
       - run:
           name: Frontend smoke test.
