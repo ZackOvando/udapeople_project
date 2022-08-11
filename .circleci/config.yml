@@ -393,6 +393,7 @@ jobs:
       - run:
           name: deploy backend
           command: |
+            cd backend
             touch ~/project/backend/.env
             echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
             echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
@@ -402,14 +403,11 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
             echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
-         #   npm i
-          #  npm run build
-          #  cd ..
-          #  pwd
-            tar -C backend -cvzf artifact.tar.gz .
-            cd backend
-            ls -ahl
+            npm i
+            npm run build
             cd ..
+            pwd
+            tar -C backend -cvzf artifact.tar.gz .
             cd .circleci/ansible
             echo "contents of the inventory.txt ...."
             cat ~/project/.circleci/ansible/inventory.txt
