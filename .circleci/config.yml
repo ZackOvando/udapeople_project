@@ -394,10 +394,10 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo -y apk add --update curl
-            sudo -y apk add --update ansible
-            sudo -y apk add --update tar gzip nodejs npm
-            sudo -y apk add --update --no-cache python3 py3-pip
+            apk add --update curl
+            apk add --update ansible
+            apk add --update tar gzip nodejs npm
+            apk add --update --no-cache python3 py3-pip
             /usr/local/bin/python -m pip install --upgrade pip
             apk update pip3
             pip3 install awscli

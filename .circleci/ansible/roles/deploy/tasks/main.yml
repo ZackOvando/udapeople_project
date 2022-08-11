@@ -1,36 +1,28 @@
----
-- name: Creates App directory
+- name: Creates directory
   file:
-    path: ~/app
+    path: /home/ubuntu/backend
     state: directory
-    
-- name: Upload app 
+- name: "move backend files to server."
   copy:
-    src: files/artifact.tar
-    dest: "~/app"
-- name: Install dependencies
+    src: /root/project/backend
+    dest: /home/ubuntu
+
+- name: "install package dependencies"
+  shell: |
+    cd /home/ubuntu/backend    
+    ls -la
+    npm install
+- name: "build package"
+  shell: |
+    cd /home/ubuntu/backend
+    npm run build
+- name: "run migrations again"
+  shell: |
+    cd /home/ubuntu/backend
+    npm run migrations
+- name: Executing node
   become: true
   shell: |
-    curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-    apt-get install -y nodejs
-    apt-get install gcc g++ make -y
-    npm install -g npm
-    npm install -g pm2
-    cd /home/ubuntu/app
-    tar xf /home/ubuntu/app/artifact.tar
-  
-- name: Start backend
-  shell:  |
-    /usr/bin/pm2 start /home/ubuntu/app/dist/main.js --name backend -f
-  environment:
-    ENVIRONMENT: production
-    NODE_ENV: production
-    TYPEORM_CONNECTION: postgres
-    TYPEORM_MIGRATIONS_DIR: ~/src/migrations
-    TYPEORM_MIGRATIONS: ~/src/migrations/*.ts
-    TYPEORM_ENTITIES: ~/src/modules/domain/**/*.entity.ts
-    TYPEORM_HOST: udapeople-prod.cpzazcyqqpl1.us-west-1.rds.amazonaws.com
-    TYPEORM_PORT: 5432
-    TYPEORM_USERNAME: postgres
-    TYPEORM_PASSWORD: zam122016@
-    TYPEORM_DATABASE: uda_people
+    cd /home/ubuntu/backend 
+    pm2 start npm --name backend -- start
+    pm2 ls
