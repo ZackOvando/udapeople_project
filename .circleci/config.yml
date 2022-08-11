@@ -511,7 +511,7 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Remove old stacks and files
+            name: Remove old stacks and files and more
             command: |
               if [[ 6f4e40c == "" ]]
               then
