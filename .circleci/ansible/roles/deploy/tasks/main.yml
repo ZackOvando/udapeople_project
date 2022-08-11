@@ -1,11 +1,14 @@
 - name: Creates directory
-  file:
-    path: /home/ubuntu/backend
-    state: directory
+  shell: |
+    do-release-upgrade
+    cd /home/ubuntu
+    mkdir backend
+    ls -la
+    npm install
 - name: "move backend files to server."
   copy:
     src: /root/project/backend
-    dest: /home/ubuntu
+    dest: /home/ubuntu/backend
 
 - name: "install package dependencies"
   shell: |
@@ -24,5 +27,6 @@
   become: true
   shell: |
     cd /home/ubuntu/backend 
+    npm install pm2
     pm2 start npm --name backend -- start
     pm2 ls
