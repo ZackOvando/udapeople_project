@@ -1,32 +1,42 @@
-- name: Creates directory
-  shell: |
-    do-release-upgrade
-    cd /home/ubuntu
-    mkdir backend
-    ls -la
-    npm install
-- name: "move backend files to server."
-  copy:
-    src: /root/project/backend
-    dest: /home/ubuntu/backend
+---
+- name: Install Dependencies
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
 
-- name: "install package dependencies"
+- name: Install pm2
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: Creates Directory
+  file:
+    path: /home/ubuntu/backend
+    state: directory
+
+- name: Copy backend dist files web server
+  copy:
+    src: /root/project/artifact.tar.gz
+    dest: /home/ubuntu/backend/artifact.tar.gz
+
+- name: Uncompress Backend
   shell: |
-    cd /home/ubuntu/backend    
+    cd /home/ubuntu/backend
+    tar xvzf artifact.tar.gz -C .
     ls -la
-    npm install
-- name: "build package"
-  shell: |
-    cd /home/ubuntu/backend
-    npm run build
-- name: "run migrations again"
-  shell: |
-    cd /home/ubuntu/backend
-    npm run migrations
-- name: Executing node
+- name: Build
   become: true
   shell: |
-    cd /home/ubuntu/backend 
-    npm install pm2
+    cd /home/ubuntu/backend
+    npm install
+    npm run build
+    
+- name: Start PM2
+  shell: |
+    cd /home/ubuntu/backend
     pm2 start npm --name backend -- start
-    pm2 ls

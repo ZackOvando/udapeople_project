@@ -87,7 +87,6 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
              cd backend
              npm install
              npm run build
@@ -200,12 +199,11 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            BACKEND_AWS_PUBLIC_IP=$(aws ec2 describe-instances \
+            aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --output text)
-            echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt  
-            echo backend ip addres: $BACKEND_AWS_PUBLIC_IP
+              --output text >> .circleci/ansible/inventory.txt
+              echo `cat .circleci/ansible/inventory.txt`
       - persist_to_workspace:
           root: ~/
           paths:
@@ -215,54 +213,26 @@ jobs:
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
-        environment:
-          ENVIRONMENT: "production"
-          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-          TYPEORM_HOST: $TYPEORM_HOST
-          TYPEORM_USERNAME: $TYPEORM_USERNAME
-          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-          TYPEORM_DATABASE: $TYPEORM_DATABASE
-          TYPEORM_PORT: $TYPEORM_PORT
-          TYPEORM_ENTITIES: $TYPEORM_ENTITIES
-      # Docker image here that supports Ansible
     steps:
       # Checkout code from git
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
-      # Add ssh keys with fingerprint
-      # attach workspace\
       - attach_workspace:
           at: ~/
       - run:
           name: Install Ansible
           command: |
-            apk add curl
-            apk add --upgrade bash
             apk add --update ansible
             apk add --update --no-cache python3 py3-pip
             /usr/local/bin/python -m pip install --upgrade pip
-            apk add openssh-client
-            pip3 install awscli
+            pip install awscli
       - run:
           name: Configure server
           command: |
-            touch ~/project/backend/.env
-            echo ENVIRONMENT=production >> "backend/.env"
-            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
-            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
-            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
-            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
-            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
-            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
-            cat backend/.env
             export ANSIBLE_HOST_KEY_CHECKING=False
-            cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml -vv
-          # ansible-playbook -i inventory.txt configure-server.yml --private-key=~/zackovandopersonal.pem
+            cd ~/project/.circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
 
   run-migrations:
     docker:
@@ -310,7 +280,6 @@ jobs:
           name: Run migrations
           no_output_timeout: 20m
           command: |
-            # Your code here
             cd backend
             sudo npm run migrations > migrations_dump.txt
       - slack/notify:
@@ -406,10 +375,10 @@ jobs:
             tar -C backend -cvzf artifact.tar.gz .
             cd .circleci/ansible
             echo "contents of the inventory.txt ...."
-            cat ~/project/.circleci/ansible/inventory.txt
+            cat inventory.txt
             export ANSIBLE_HOST_KEY_CHECKING=False
             aws --version
-            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml
+            ansible-playbook -i inventory.txt deploy-backend.yml
       
 
 
@@ -431,12 +400,17 @@ jobs:
           event: fail
           template: basic_fail_1
       - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+      - run:
           name: Backend smoke test.
           command: |
-            export API_URL="http://$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text):3030"
-            echo "${API_URL}"
-            echo "${BACKEND_IP}"
-            curl "${API_URL}/api/status" 
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+            echo "BACKEND_IP=${BACKEND_IP}"
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL=${API_URL}"
+            curl "${API_URL}/api/status"
       - run:
           name: Frontend smoke test.
           command: |
