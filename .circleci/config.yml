@@ -206,6 +206,10 @@ jobs:
               --output text)
             echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt  
             echo backend ip addres: $BACKEND_AWS_PUBLIC_IP
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
 
   configure-infrastructure:
@@ -364,11 +368,7 @@ jobs:
   deploy-backend:
     docker:
       - image: python:3.7-alpine3.11 
-      # Docker image here that supports Ansible
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
       - checkout
       - add_ssh_keys:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
