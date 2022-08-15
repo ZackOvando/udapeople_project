@@ -220,6 +220,10 @@ jobs:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       - attach_workspace:
           at: ~/
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       - run:
           name: Install Ansible
           command: |
@@ -307,6 +311,10 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       - run:
           name: Install dependencies
           command: |
@@ -343,6 +351,10 @@ jobs:
           fingerprints: ["1b:47:56:1c:90:aa:a3:ac:6a:91:4d:96:ff:0e:f5:58"]
       - attach_workspace: 
           at: ~/
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       - restore_cache:
           keys:
             - build-backend
