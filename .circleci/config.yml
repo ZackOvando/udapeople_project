@@ -429,12 +429,15 @@ jobs:
           command: |
             aws cloudformation \
             list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-            --region us-east-2 --no-paginate --output text >> ./.circleci/oldworkflowid.txt
-            
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            aws cloudformation update-stack --use-previous-template --stack-name udapeople-cloudfront --parameters ParameterKey=WorkflowID,ParameterValue=${CIRCLE_WORKFLOW_ID:0:7},UsePreviousValue=false 
+            --region us-east-1 --no-paginate --output text >> ./.circleci/oldworkflowid.txt
+      - run: 
+          name: deploy new stack
+          command: | 
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name InitialStack \
+              --parameter-overrides WorkflowID="udapeople-NEW-STACK-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
       - persist_to_workspace:
           root: ~/
           paths:
