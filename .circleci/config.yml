@@ -420,10 +420,6 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Install dependencies
-            command: |
-              npm install
-        - run:
             name: Update cloudfront distribution
             command: |
               aws cloudformation deploy \
